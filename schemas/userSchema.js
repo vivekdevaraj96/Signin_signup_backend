@@ -17,7 +17,7 @@ const userSchema=new mongoose.Schema({
         type:String,
         required:true
     },
-    randomstring:{type:String}
+    randomstring:{type:String,default:""}
 },
 {
     versionKey:false
