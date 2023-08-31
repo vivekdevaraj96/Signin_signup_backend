@@ -58,6 +58,9 @@ router.post('/userData',async(req,res)=>{
   try {
     const {token}=req.body;
     const user=jwt.verify(token, JWT_secret);
+
+
+
       const useremail=user.email;
       userModel.findOne({email:useremail})
       .then((data)=>{
@@ -67,6 +70,53 @@ router.post('/userData',async(req,res)=>{
         console.log(fname)
       })
 
+  } catch (error) {
+    res.status(400).send({message:error})
+  }
+})
+
+router.post('/forgetpassword',async(req,res)=>{
+  try {
+    const {email}=req.body;
+    const olduser=await userModel.findOne({email});
+    if(!olduser){
+      return res.json({message:"user Doesn't exists"})
+    }
+    let randomstring=bcrypt.genSalt(10)
+    const secret=JWT_secret+olduser.password;
+    olduser.randomstring=randomstring;
+    olduser.save()
+    const token=jwt.sign({email:olduser.email,id:olduser.id,randomstring:randomstring}, secret, {
+      expiresIn:"5m"
+    })
+    const link=`http://localhost:8000/reset-password/${olduser.id}/${token}`
+    console.log(link)
+    res.status(200).send({message:"link send to mail"})
+
+  } catch (error) {
+    res.status(400).send({message:error})
+  }
+})
+
+router.post('/reset-password/:id/:token',async(req,res)=>{
+  const {id,token}=req.params;
+  try {
+    
+    
+    
+    console.log(`id...... ${id}`)
+    console.log(`token ......${token}`)
+    
+    const olduser=await userModel.findOne({_id:id});
+    console.log(olduser)
+    if(olduser){
+    const secret=JWT_SECRET+olduser.password;
+    const verify=await jwt.verify(token,secret);
+      console.log(verify)
+      res.send(verify)
+    }else{
+      res.status(400).send({message:"Unable to retrieve user data"})
+    }
   } catch (error) {
     res.status(400).send({message:error})
   }
